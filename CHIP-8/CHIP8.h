@@ -32,8 +32,9 @@ struct CHIP8
 		0xF0, 0x80, 0xF0, 0x80, 0xF0, //E
 		0xF0, 0x80, 0xF0, 0x80, 0x80  //F
 	};
-	void initialize();
 
+	void initialize();
+	void emulateCycle();
 	CHIP8();
 	~CHIP8();
 };
