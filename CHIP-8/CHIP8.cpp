@@ -17,6 +17,7 @@ void CHIP8::initialize()
 	fill(begin(stack), end(stack), 0);
 	fill(begin(V), end(V), 0);
 	fill(begin(memory), end(memory), 0);
+	copy_n(begin(CHIP8::font), sizeof(CHIP8::font), begin(memory));
 
 
 }
