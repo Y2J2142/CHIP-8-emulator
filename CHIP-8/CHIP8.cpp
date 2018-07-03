@@ -223,6 +223,7 @@ void CHIP8::emulateCycle()
 				uint16_t dupa = I;
 				for (auto i = 0; i < 0xF; ++i, ++dupa)
 					memory[dupa] = V[i];
+				I += (opcode & 0x0F00) + 1;
 			}
 			pc += 2;
 			break;
@@ -231,6 +232,7 @@ void CHIP8::emulateCycle()
 				uint16_t dupa = I;
 				for (auto i = 0; i < 0xF; ++i, ++dupa)
 					V[i] = memory[dupa];
+				I += (opcode & 0x0F00) + 1;
 			}
 			pc += 2;
 			break;
