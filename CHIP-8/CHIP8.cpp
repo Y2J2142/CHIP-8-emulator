@@ -1,6 +1,6 @@
 #include "CHIP8.h"
 #include <algorithm>
-
+#include <time.h>
 using std::fill;
 using std::begin;
 using std::end;
@@ -61,53 +61,64 @@ void CHIP8::emulateCycle()
 		case 0x8000:
 			switch (opcode & 0x000F)
 			{
-				case 0x0000:
-					V[opcode & 0x0F00] = V[opcode & 0x00F0];
-					pc += 2;
-					break;
-				case 0x0001:
-					V[opcode & 0x0F00] = V[opcode & 0x0F00] | V[opcode & 0x00F0];
-					pc += 2;
-					break;
-				case 0x0002:
-					V[opcode & 0x0F00] = V[opcode & 0x0F00] & V[opcode & 0x00F0];
-					pc += 2;
-					break;
-				case 0x0003:
-					V[opcode & 0x0F00] = V[opcode & 0x0F00] ^ V[opcode & 0x00F0];
-					pc += 2;
-					break;
-				case 0x0004:
-					if (V[opcode & 0x0F00] + V[opcode & 0x00F0] > 255)
-						V[0xF] = 1;
-					V[opcode & 0x0F00] = V[opcode & 0x0F00] + V[opcode & 0x00F0];
-					pc += 2;
-					break;
-				case 0x0005:
-					V[0xF] = V[opcode & 0x0F00] > V[opcode & 0x00F0];
-					V[opcode & 0x0F00] = V[opcode & 0x0F00] - V[opcode & 0x00F0];
-					pc += 2;
-					break;
-				case 0x0006:
-					V[0xF] = V[0x0F00] & 1;
-					V[0x0F00] /= 2;
-					pc += 2;
-					break;
-				case 0x0007:
-					V[0xF] = V[0x00F0] > V[0x0F00];
-					V[0x0F00] = V[0x00F0] - V[0x0F0];
-					pc += 2;
-					break;
-				case 0x000E:
-					V[0xF] = V[0x0F00] & 0b10000000
-
-
+			case 0x0000:
+				V[opcode & 0x0F00] = V[opcode & 0x00F0];
+				pc += 2;
+				break;
+			case 0x0001:
+				V[opcode & 0x0F00] = V[opcode & 0x0F00] | V[opcode & 0x00F0];
+				pc += 2;
+				break;
+			case 0x0002:
+				V[opcode & 0x0F00] = V[opcode & 0x0F00] & V[opcode & 0x00F0];
+				pc += 2;
+				break;
+			case 0x0003:
+				V[opcode & 0x0F00] = V[opcode & 0x0F00] ^ V[opcode & 0x00F0];
+				pc += 2;
+				break;
+			case 0x0004:
+				if (V[opcode & 0x0F00] + V[opcode & 0x00F0] > 255)
+					V[0xF] = 1;
+				V[opcode & 0x0F00] = V[opcode & 0x0F00] + V[opcode & 0x00F0];
+				pc += 2;
+				break;
+			case 0x0005:
+				V[0xF] = V[opcode & 0x0F00] > V[opcode & 0x00F0];
+				V[opcode & 0x0F00] = V[opcode & 0x0F00] - V[opcode & 0x00F0];
+				pc += 2;
+				break;
+			case 0x0006:
+				V[0xF] = V[0x0F00] & 1;
+				V[0x0F00] /= 2;
+				pc += 2;
+				break;
+			case 0x0007:
+				V[0xF] = V[0x00F0] > V[0x0F00];
+				V[0x0F00] = V[0x00F0] - V[0x0F0];
+				pc += 2;
+				break;
+			case 0x000E:
+				V[0xF] = V[0x0F00] >> 7;
+				V[0x0F00] *= 2;
+				pc += 2;
+				break;
 			}
+			break;
+		case 0x9000:
+			if (V[opcode & 0x0F00] != V[opcode & 0x00F0])
+				pc += 2;
+			pc += 2;
 			break;
 		case 0xA000:
 			I = opcode & 0x0FFF;
 			pc += 2;
 		break;
+		case 0xB000:
+			pc = V[0] + opcode & 0x0FFF;
+			break;
+		case 0xC000:
+			srand(time(NULL));
 	}
 }
 
