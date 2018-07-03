@@ -68,11 +68,11 @@ void CHIP8::emulateCycle()
 			pc += 2;
 			break;
 		case 0x6000:
-			V[opcode & 0x0F00] = 0x00FF;
+			V[opcode & 0x0F00] = (opcode & 0x00FF);
 			pc += 2;
 			break;
 		case 0x7000:
-			V[opcode & 0x0F00] += opcode & 0x00FF;
+			V[opcode & 0x0F00] += (opcode & 0x00FF);
 			pc += 2;
 			break;
 		case 0x8000:
@@ -112,11 +112,11 @@ void CHIP8::emulateCycle()
 				break;
 			case 0x0007:
 				V[0xF] = V[0x00F0] > V[0x0F00];
-				V[0x0F00] = V[0x00F0] - V[0x0F0];
+				V[0x0F00] = V[0x00F0] - V[0x0F00];
 				pc += 2;
 				break;
 			case 0x000E:
-				V[0xF] = V[0x0F00] >> 7;
+				V[0xF] = (V[0x0F00] >> 7) & 1;
 				V[0x0F00] *= 2;
 				pc += 2;
 				break;
