@@ -122,6 +122,23 @@ void CHIP8::emulateCycle()
 			srand(time(NULL));
 			V[opcode & 0x0F00] = (rand() % 256) & (opcode & 0x00FF);
 			break;
+		case 0xD000:
+		{
+			uint8_t n = opcode & 0x000F;
+			uint8_t x = V[opcode & 0x0F00], y = V[opcode & 0x00F0];
+				for (int i = 0; i <= n; ++i, ++y)
+				{
+					x %= 64;
+					y %= 32;
+					for (auto bit = 0; bit < 8; ++bit, ++x)
+					{
+						
+						if ((gfx[y][x] ^ ((I >> bit) & 1)) == 0 && gfx[y][x])
+							V[0xF] = 1;
+						gfx[y][x] ^= (I >> bit) & 1;
+					}
+				}
+		}
 
 	}
 }
