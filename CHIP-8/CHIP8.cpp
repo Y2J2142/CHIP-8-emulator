@@ -1,6 +1,7 @@
 #include "CHIP8.h"
 #include <algorithm>
 #include <time.h>
+#include <iostream>
 using std::fill;
 using std::begin;
 using std::end;
@@ -14,8 +15,7 @@ void CHIP8::initialize()
 	opcode = 0;
 	I = 0;
 	sp = 0;
-	for (auto &  ar : gfx)
-		fill(begin(ar), end(ar), false);
+	fill(begin(gfx), end(gfx), false);
 	
 	fill(begin(stack), end(stack), 0);
 	fill(begin(V), end(V), 0);
@@ -31,11 +31,25 @@ void CHIP8::emulateCycle()
 
 	switch (opcode & 0xF000)
 	{
+		case 0x0000:
+		{
+			switch (opcode & 0x000F)
+			{
+			case 0x0000:
+				fill(begin(gfx), end(gfx), false);
+				pc += 2;
+				break;
+			case 0x000E:
+				pc = stack[sp];
+				--sp;
+				break;
+			}
+		}
 		case 0x1000:
 			pc = opcode & 0x0FFF;
 			break;
 		case 0x2000:
-			stack[++sp] = pc;
+			stack[++sp] = pc + 2;
 			pc = opcode & 0x0FFF;
 			break;
 		case 0x3000:
@@ -49,7 +63,7 @@ void CHIP8::emulateCycle()
 			pc += 2;
 			break;
 		case 0x5000:
-			if (V[opcode & 0x0F00] == V[0x00F0])
+			if (V[opcode & 0x0F00] == V[opcode & 0x00F0])
 				pc += 2;
 			pc += 2;
 			break;
@@ -126,23 +140,30 @@ void CHIP8::emulateCycle()
 			pc += 2;
 			break;
 		case 0xD000:
+		{
+			unsigned short x = V[(opcode & 0x0F00) >> 8];
+			unsigned short y = V[(opcode & 0x00F0) >> 4];
+			unsigned short height = opcode & 0x000F;
+			unsigned short pixel;
+
+			V[0xF] = 0;
+			for (int yline = 0; yline < height; yline++)
 			{
-				uint8_t n = opcode & 0x000F;
-				uint8_t x = V[opcode & 0x0F00], y = V[opcode & 0x00F0];
-					for (int i = 0; i <= n; ++i, ++y)
+				pixel = memory[I + yline];
+				for (int xline = 0; xline < 8; xline++)
+				{
+					if ((pixel & (0x80 >> xline)) != 0)
 					{
-						x %= 64;
-						y %= 32;
-						for (auto bit = 0; bit < 8; ++bit, ++x)
+						if (gfx[(x + xline + ((y + yline) * 64))] == 1)
 						{
-							
-							if ((gfx[y][x] ^ ((I >> bit) & 1)) == 0 && gfx[y][x])
-								V[0xF] = 1;
-							gfx[y][x] ^= (I >> bit) & 1;
+							V[0xF] = 1;
 						}
+						gfx[x + xline + ((y + yline) * 64)] ^= 1;
 					}
+				}
 			}
 			pc += 2;
+		}
 			break;
 		case 0xE000:
 			switch (opcode & 0x00FF)
@@ -214,6 +235,71 @@ void CHIP8::emulateCycle()
 			pc += 2;
 			break;
 			}
+	}
+}
+
+void CHIP8::loadFile(std::string filename)
+{
+
+		printf("Loading: %s\n", filename);
+
+		// Open file
+		FILE * pFile;
+		auto err = fopen_s(&pFile, filename.c_str(), "r");
+		if (pFile == NULL)
+		{
+			fputs("File error", stderr);
+		}
+
+		// Check file size
+		fseek(pFile, 0, SEEK_END);
+		long lSize = ftell(pFile);
+		rewind(pFile);
+		printf("Filesize: %d\n", (int)lSize);
+
+		// Allocate memory to contain the whole file
+		char * buffer = (char*)malloc(sizeof(char) * lSize);
+		if (buffer == NULL)
+		{
+			fputs("Memory error", stderr);
+		}
+
+		// Copy the file into the buffer
+		size_t result = fread(buffer, 1, lSize, pFile);
+		if (result != lSize)
+		{
+			fputs("Reading error", stderr);
+		}
+
+		// Copy buffer to Chip8 memory
+		if ((4096 - 512) > lSize)
+		{
+			for (int i = 0; i < lSize; ++i)
+				memory[i + 512] = buffer[i];
+		}
+		else
+			printf("Error: ROM too big for memory");
+
+		// Close file, free buffer
+		fclose(pFile);
+		free(buffer);
+}
+
+void CHIP8::draw()
+{
+	system("cls");
+
+	for (int i = 0; i < 32; ++i)
+	{
+		for (int j = 0; j < 64; ++j)
+		{
+			if (gfx[i*j])
+				std::cout << char(219);
+			else
+				std::cout << " ";
+		}
+
+		std::cout << "\n";
 	}
 }
 
