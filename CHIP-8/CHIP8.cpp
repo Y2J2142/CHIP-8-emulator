@@ -5,6 +5,8 @@ using std::fill;
 using std::begin;
 using std::end;
 using std::copy_n;
+using std::find;
+using std::distance;
 
 void CHIP8::initialize()
 {
@@ -37,12 +39,12 @@ void CHIP8::emulateCycle()
 			pc = opcode & 0x0FFF;
 			break;
 		case 0x3000:
-			if (V[opcode & 0x0F00] == opcode & 0x00FF)
+			if (V[opcode & 0x0F00] == (opcode & 0x00FF))
 				pc += 2;
 			pc += 2;
 			break;
 		case 0x4000:
-			if (V[opcode & 0x0F00] != opcode & 0x00FF)
+			if (V[opcode & 0x0F00] != (opcode & 0x00FF))
 				pc += 2;
 			pc += 2;
 			break;
@@ -121,25 +123,97 @@ void CHIP8::emulateCycle()
 		case 0xC000:
 			srand(time(NULL));
 			V[opcode & 0x0F00] = (rand() % 256) & (opcode & 0x00FF);
+			pc += 2;
 			break;
 		case 0xD000:
-		{
-			uint8_t n = opcode & 0x000F;
-			uint8_t x = V[opcode & 0x0F00], y = V[opcode & 0x00F0];
-				for (int i = 0; i <= n; ++i, ++y)
-				{
-					x %= 64;
-					y %= 32;
-					for (auto bit = 0; bit < 8; ++bit, ++x)
+			{
+				uint8_t n = opcode & 0x000F;
+				uint8_t x = V[opcode & 0x0F00], y = V[opcode & 0x00F0];
+					for (int i = 0; i <= n; ++i, ++y)
 					{
-						
-						if ((gfx[y][x] ^ ((I >> bit) & 1)) == 0 && gfx[y][x])
-							V[0xF] = 1;
-						gfx[y][x] ^= (I >> bit) & 1;
+						x %= 64;
+						y %= 32;
+						for (auto bit = 0; bit < 8; ++bit, ++x)
+						{
+							
+							if ((gfx[y][x] ^ ((I >> bit) & 1)) == 0 && gfx[y][x])
+								V[0xF] = 1;
+							gfx[y][x] ^= (I >> bit) & 1;
+						}
 					}
-				}
-		}
-
+			}
+			pc += 2;
+			break;
+		case 0xE000:
+			switch (opcode & 0x00FF)
+			{
+			case 0x009E:
+				if (key[V[opcode & 0x0F00]])
+					pc += 2;
+				pc += 2;
+				break;
+			case 0x00A1:
+				if (!key[V[opcode & 0x0F00]])
+					pc += 2;
+				pc += 2;
+				break;
+			}
+			break;
+		case 0xF000:
+			switch (opcode & 0x00FF)
+			{
+			case 0x0007:
+				V[opcode & 0x0F00] = delay_timer;
+				pc += 2;
+				break;
+			case 0x000A:
+				while (find(begin(key), end(key), true) == end(key));
+				V[opcode & 0x0F00] = distance(begin(key), find(begin(key), end(key), true));
+				pc += 2;
+				break;
+			case 0x0015:
+				delay_timer = V[opcode & 0x0F00];
+				pc += 2;
+				break;
+			case 0x0018:
+				sound_timer = V[opcode & 0x0F00];
+				pc += 2;
+				break;
+			case 0x001E:
+				I += V[opcode & 0x0F00];
+				pc += 2;
+				break;
+			case 0x0029:
+				I = V[opcode & 0x0F00] * 5;
+				pc += 2;
+			case 0x0033:
+			{
+				uint8_t val = V[opcode & 0x0F00];
+				memory[I] = val / 100;
+				val %= 100;
+				memory[I + 1] = val / 10;
+				val %= 10;
+				memory[I + 2] = val;
+			}
+				pc += 2;
+				break;
+			case 0x0055:
+			{
+				uint16_t dupa = I;
+				for (auto i = 0; i < 0xF; ++i, ++dupa)
+					memory[dupa] = V[i];
+			}
+			pc += 2;
+			break;
+			case 0x0065:
+			{
+				uint16_t dupa = I;
+				for (auto i = 0; i < 0xF; ++i, ++dupa)
+					V[i] = memory[dupa];
+			}
+			pc += 2;
+			break;
+			}
 	}
 }
 
